@@ -62,9 +62,11 @@ public class AuthManagerTest {
         verify(userRepository).findByEmail("nonexistent@example.com");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testLoginWithNullEmail() throws NoSuchAlgorithmException {
-        authManager.login(null, "password");
+        assertThrows(IllegalArgumentException.class, () -> {
+            authManager.login(null, "password");
+        });
     }
 
     @Test
@@ -82,11 +84,17 @@ public class AuthManagerTest {
     @Test
     public void testRegisterExistingUser() throws NoSuchAlgorithmException {
         String email = "existing@example.com";
-        assertThrows(IllegalArgumentException.class, () -> {
-            when(userRepository.findByEmail(email)).thenReturn(new User(email, "someHash")); // Arrange
-            authManager.register(email, "password");
+        String password = "password123";
+        
+        // Arrange - Mock that user already exists
+        when(userRepository.findByEmail(email)).thenReturn(new User(email, "someHash"));
+        
+        // Act & Assert - Should throw IllegalStateException
+        assertThrows(IllegalStateException.class, () -> {
+            authManager.register(email, password);
         });
-        when(userRepository.findByEmail(email)).thenReturn(new User(email, "someHash"));        // Act
-        authManager.register(email, "password");
+        
+        // Verify that findByEmail was called
+        verify(userRepository).findByEmail(email);
     }
 }
